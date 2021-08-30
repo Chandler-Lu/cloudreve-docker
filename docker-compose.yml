@@ -1,0 +1,55 @@
+version: "3"
+
+services:
+  cloudreve:
+    image: xavierniu/cloudreve
+    restart: always
+    ports:
+      - 127.0.0.1:5212:5212
+    environment:
+      - PUID=${CLOUDREVE_PUID}
+      - PGID=${CLOUDREVE_PGID}
+      - TZ="Asia/Shanghai"
+    volumes:
+      - ${CLOUDREVE_UPLOAD_PATH}:/cloudreve/uploads
+      - ${TEMP_FOLDER_PATH}:/downloads
+      - ${CLOUDREVE_CONF_PATH}:/cloudreve/config
+      - ${CLOUDREVE_AVATAR_PATH}:/cloudreve/avatar
+    depends_on:
+      - redis
+      - mysql
+    networks:
+      - cloudreve-network
+
+  mysql:
+    image: mysql:5.6
+    volumes:
+      - ${SQL_DB_PATH}:/var/lib/mysql/:rw,cached
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+    restart: always
+    networks:
+      cloudreve-network:
+        ipv4_address: ${MYSQL_IP}
+
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+    networks:
+      cloudreve-network:
+        ipv4_address: ${REDIS_IP}
+
+volumes:
+  redis-data:
+
+networks:
+  cloudreve-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: "${DOCKER_SUBNET}"
+
